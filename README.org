@@ -1,3 +1,31 @@
+* Fork: Better TTY Experience
+
+Original TTY Mode:
+
+[[file:img/original.jpeg]]
+
+New Kawaii Theme (with customizations):
+
+[[file:img/kawaii.jpeg]]
+
+Example Custom Config:
+
+#+BEGIN_SRC elisp
+(use-package nyan-mode
+   :demand t
+   :straight (nyan-mode :type git :host github :repo "lopez-mar/nyan-mode")
+   :custom
+   (nyan-bar-length 32)
+   (nyan-rainbow-style 'solid-background)
+   (nyan-cat-cute-style 'kaomoji-with-bg)
+   (nyan-cute-outerspace-style 'starfield)
+   (nyan-rainbow-colors '("#f7768e" "#ff9e64" "#e0af68" "#73daca" "#7dcfff" "#7aa2f7" "#717cd7"))
+   (nyan-cat-background-color "hot pink")
+   (nyan-cat-foreground-color "#24283b")
+   (nyan-star-colors '("#c0caf5" "#a9b1d6" "#787c99"))
+   (nyan-space-color "#1d1f2c")
+#+END_SRC
+
 * Nyan Mode - Turn your Emacs into Nyanmacs! :)
 
 [[https://github.com/TeMPOraL/nyan-mode][file:https://badge.fury.io/gh/TeMPOraL%2Fnyan-mode.svg]]
