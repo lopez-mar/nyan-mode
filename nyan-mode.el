@@ -80,8 +80,31 @@ reapply them immediately."
   (when (featurep 'nyan-mode)
     (when (and (boundp 'nyan-mode)
                nyan-mode)
+      ;; Re-initialize TTY faces if needed
+      (when (and (not (display-graphic-p))
+                 nyan-rainbow-use-colors)
+        (nyan-define-rainbow-faces))
       (nyan-mode -1)
       (nyan-mode 1))))
+
+;;; TTY Mode Enhanced Rainbow Support
+;;; ==================================
+;;;
+;;; When running in a terminal (non-graphical) environment, nyan-mode can display
+;;; colorful rainbow trails and cute characters instead of plain ASCII.
+;;;
+;;; To enable: (setq nyan-rainbow-use-colors t)
+;;;
+;;; Try these commands to customize the appearance:
+;;;   M-x nyan-cycle-cute-style      - Change rainbow style
+;;;   M-x nyan-cycle-cat-style       - Change cat appearance
+;;;   M-x nyan-cycle-space-style     - Change space background
+;;;   M-x nyan-preset-kawaii         - Apply cute preset
+;;;   M-x nyan-preset-galaxy         - Apply space theme
+;;;   M-x nyan-preset-retro          - Apply retro/vaporwave theme
+
+;;; TTY Mode Customization Variables
+;;; ==================================
 
 (defcustom nyan-animation-frame-interval 0.2
   "Number of seconds between animation frames."
@@ -160,6 +183,156 @@ This can be t or nil."
   :type 'integer
   :group 'nyan)
 
+(defcustom nyan-rainbow-use-colors nil
+  "Enable rainbow colors in TTY mode.
+When nil, falls back to default behavior (plain characters)."
+  :type 'boolean
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-rainbow-style 'solid-background
+  "Visual style for the rainbow in TTY mode.
+'foreground-only - Colored characters on default background
+'background-only - Default characters on colored background
+'solid-background - Solid blocks with colored backgrounds
+'cute-stars - Mix of blocks and nerd font stars with colors
+'galaxy-trail - Alternating blocks and sparkles for a space theme"
+  :type '(choice (const :tag "Foreground colors only" foreground-only)
+                 (const :tag "Background colors only" background-only)
+                 (const :tag "Solid colored blocks" solid-background)
+                 (const :tag "Cute stars and blocks" cute-stars)
+                 (const :tag "Galaxy trail" galaxy-trail))
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-rainbow-colors
+  '("red" "orange" "yellow" "green" "blue" "indigo" "violet")
+  "List of colors to use for the rainbow in TTY mode.
+Colors cycle through this list. Can be color names or hex values."
+  :type '(repeat string)
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-inactive-rainbow-colors
+  '("lavenderblush4" "mistyrose4" "navajowhite4" "honeydew4" "azure4" "royalblue4" "slateblue4")
+  "List of colors to use for the rainbow in inactive windows in TTY mode.
+Colors cycle through this list. Can be color names or hex values."
+  :type '(repeat string)
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-star-colors
+  '("white" "silver" "light grey")
+  "List of colors to use for the stars in TTY mode.
+Colors cycle through this list. Can be color names or hex values."
+  :type '(repeat string)
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-inactive-star-colors
+  '("white" "silver" "light grey")
+  "List of colors to use for the stars in TTY mode.
+Colors cycle through this list. Can be color names or hex values."
+  :type '(repeat string)
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-space-color "black"
+  "Color to use for the background of space in TTY mode.
+Can be a color name like 'black' or a hex value like '#000000'."
+  :type 'string
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-inactive-space-color "black"
+  "Color to use for the background of space in inactive windows in TTY mode.
+Can be a color name like 'black' or a hex value like '#000000'."
+  :type 'string
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-cat-background-color "hot pink"
+  "Background color for the nyan cat when using kaomoji-with-bg style.
+Can be a color name like 'hot pink' or a hex value like '#ff69b4'."
+  :type 'string
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-cat-foreground-color "white"
+  "Foreground (text) color for the nyan cat when using kaomoji-with-bg style.
+Can be a color name like 'white' or a hex value like '#ffffff'."
+  :type 'string
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-cat-inactive-background-color "black"
+  "Background color for the nyan cat in inactive windows when using kaomoji-with-bg style.
+Can be a color name like 'black' or a hex value like '#000000'."
+  :type 'string
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-cat-inactive-foreground-color "white"
+  "Foreground (text) color for the nyan cat in inactive windows when using kaomoji-with-bg style.
+Can be a color name like 'white' or a hex value like '#ffffff'."
+  :type 'string
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-cat-cute-style 'kaomoji-with-bg
+  "Style for the nyan cat in TTY mode.
+'kaomoji-only - Just the kaomoji face
+'kaomoji-with-bg - Kaomoji with a cute background color
+'nerd-cat - Use nerd font cat icon with colors
+'emoji-cat - Use emoji cat (if terminal supports it)"
+  :type '(choice (const :tag "Kaomoji only" kaomoji-only)
+                 (const :tag "Kaomoji with background" kaomoji-with-bg)
+                 (const :tag "Nerd font cat" nerd-cat)
+                 (const :tag "Emoji cat" emoji-cat))
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
+(defcustom nyan-cute-outerspace-style 'starfield
+  "Style for the outer space area in TTY mode.
+'plain - Simple dashes
+'dots - Dotted space
+'starfield - Mix of stars and space dots
+'void - Dark background with occasional sparkles"
+  :type '(choice (const :tag "Plain dashes" plain)
+                 (const :tag "Dots" dots)
+                 (const :tag "Starfield" starfield)
+                 (const :tag "Dark void" void))
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
 ;;; Load images of Nyan Cat an it's rainbow.
 (defvar nyan-cat-image (if (image-type-available-p 'xpm)
                            (create-image nyan-cat-face-image 'xpm nil :ascent 'center)))
@@ -170,6 +343,189 @@ This can be t or nil."
                                                           'xpm nil :ascent 95))
                                           '(1 2 3 4 5 6))))
 (defvar nyan-current-frame 0)
+
+;;; TTY Mode Character Definitions
+;;; ===============================
+
+(defconst nyan-cute-chars
+  '((block . "█")
+    (half-block . "▌")
+    (light-block . "░")
+    (medium-block . "▒")
+    (dark-block . "▓")
+    (star . "✦")
+    (sparkle . "")
+    (tiny-sparkles . "")
+    (twinkle . "✧")
+    (diamond . "♦")
+    (heart . "♥")
+    (dot . "·")
+    (bullet . "•")
+    (circle . "○")
+    (nerd-cat . "")
+    (nerd-star . "")
+    (nerd-sparkle . "󰫢")))
+
+(defun nyan-get-char (symbol)
+  "Get character for SYMBOL, with fallback for terminals without fancy fonts."
+  (let ((char (cdr (assq symbol nyan-cute-chars))))
+    (or char "?")))
+
+;;; TTY Mode Face Management
+;;; =========================
+
+(defun nyan-define-rainbow-face (index colors-list prefix)
+  "Define a single rainbow face for INDEX using COLORS-LIST with PREFIX."
+  (let* ((face-name (intern (format "%s-%d" prefix (1+ index))))
+         (color (nth index colors-list))
+         (face-spec (pcase nyan-rainbow-style
+                      ('foreground-only `((t (:foreground ,color :weight bold))))
+                      ('background-only `((t (:background ,color))))
+                      ('solid-background `((t (:background ,color :foreground ,color))))
+                      ('cute-stars `((t (:foreground ,color :weight bold))))
+                      ('galaxy-trail `((t (:background ,color :foreground ,(nth 0 nyan-star-colors) :weight bold)))))))
+    (custom-declare-face face-name face-spec
+                         (format "Nyan %s color %d"
+                                (if (string-match "inactive" prefix) "inactive rainbow" "rainbow")
+                                (1+ index))
+                         :group 'nyan)))
+
+(defun nyan-define-cat-faces ()
+  "Define cat-related faces."
+  (let ((cat-face-spec (pcase nyan-cat-cute-style
+                         ('kaomoji-only `((t (:foreground ,nyan-cat-foreground-color :weight bold))))
+                         ('kaomoji-with-bg `((t (:background ,nyan-cat-background-color :foreground ,nyan-cat-foreground-color :weight bold))))
+                         ('nerd-cat '((t (:foreground "orange" :weight bold))))
+                         ('emoji-cat '((t (:foreground "orange")))))))
+    (custom-declare-face 'nyan-cat-cute cat-face-spec "Cute nyan cat face" :group 'nyan))
+
+  (let ((cat-inactive-face-spec (pcase nyan-cat-cute-style
+                                  ('kaomoji-only `((t (:foreground ,nyan-cat-inactive-foreground-color :weight bold))))
+                                  ('kaomoji-with-bg `((t (:background ,nyan-cat-inactive-background-color :foreground ,nyan-cat-inactive-foreground-color :weight bold))))
+                                  ('nerd-cat '((t (:foreground "orange" :weight bold))))
+                                  ('emoji-cat '((t (:foreground "orange")))))))
+    (custom-declare-face 'nyan-cat-cute-inactive cat-inactive-face-spec "Cute inactive nyan cat face" :group 'nyan))
+
+  ;; Background padding faces
+  (custom-declare-face 'nyan-cat-bg-padding `((t (:background ,nyan-space-color :foreground ,nyan-space-color)))
+                       "Background padding for cute cat" :group 'nyan)
+
+  (custom-declare-face 'nyan-cat-inactive-bg-padding `((t (:background ,nyan-inactive-space-color :foreground ,nyan-inactive-space-color)))
+                       "Background padding for inactive cute cat" :group 'nyan))
+
+(defun nyan-define-space-faces ()
+  "Define space-related faces."
+  (custom-declare-face 'nyan-space-void `((t (:background ,nyan-space-color :foreground ,(nth 2 nyan-star-colors))))
+                       "Dark void of space" :group 'nyan)
+  (custom-declare-face 'nyan-space-star `((t (:background ,nyan-space-color :foreground ,(nth 1 nyan-star-colors) :weight bold)))
+                       "Twinkling stars" :group 'nyan)
+  (custom-declare-face 'nyan-space-sparkle `((t (:background ,nyan-space-color :foreground ,(nth 0 nyan-star-colors) :weight bold)))
+                       "Space sparkles" :group 'nyan)
+
+  (custom-declare-face 'nyan-inactive-space-void `((t (:background ,nyan-inactive-space-color :foreground ,(nth 2 nyan-inactive-star-colors))))
+                       "Dark inactive void of space" :group 'nyan)
+  (custom-declare-face 'nyan-inactive-space-star `((t (:background ,nyan-inactive-space-color :foreground ,(nth 1 nyan-inactive-star-colors) :weight bold)))
+                       "Twinkling inactive stars" :group 'nyan)
+  (custom-declare-face 'nyan-inactive-space-sparkle `((t (:background ,nyan-inactive-space-color :foreground ,(nth 0 nyan-inactive-star-colors) :weight bold)))
+                       "Space inactive sparkles" :group 'nyan))
+
+(defun nyan-define-rainbow-faces ()
+  "Define or redefine rainbow faces based on current customization."
+  ;; Rainbow segment faces
+  (dotimes (i (length nyan-rainbow-colors))
+    (nyan-define-rainbow-face i nyan-rainbow-colors "nyan-rainbow"))
+
+  (dotimes (i (length nyan-inactive-rainbow-colors))
+    (nyan-define-rainbow-face i nyan-inactive-rainbow-colors "nyan-inactive-rainbow"))
+
+  ;; Cat faces
+  (nyan-define-cat-faces)
+
+  ;; Space faces
+  (nyan-define-space-faces))
+
+;;; TTY Mode Character Generation
+;;; ==============================
+
+(defun nyan-get-rainbow-segment (index)
+  "Get a cute rainbow segment character for position INDEX."
+  (let* ((color-index (% index (length nyan-rainbow-colors)))
+         (face-name (intern (format (if (mode-line-window-selected-p)
+                                        "nyan-rainbow-%d"
+                                      "nyan-inactive-rainbow-%d") (1+ color-index))))
+         (char (pcase nyan-rainbow-style
+                 ('foreground-only (nyan-get-char 'block))
+                 ('background-only " ")
+                 ('solid-background " ")
+                 ('cute-stars (if (zerop (% index 3))
+                                  (nyan-get-char 'nerd-star)
+                                (nyan-get-char 'block)))
+                 ('galaxy-trail (pcase (% index 4)
+                                  (0 (nyan-get-char 'nerd-sparkle))
+                                  (1 (nyan-get-char 'block))
+                                  (2 (nyan-get-char 'nerd-star))
+                                  (3 (nyan-get-char 'block)))))))
+    (propertize char 'face face-name)))
+
+(defun nyan-get-cute-cat ()
+  "Get the cute cat representation."
+  (pcase nyan-cat-cute-style
+    ('kaomoji-only
+     (aref (nyan-catface) (nyan-catface-index)))
+    ('kaomoji-with-bg
+     (concat (propertize " "
+                         'face (if (mode-line-window-selected-p)
+                                   'nyan-cat-cute
+                                 'nyan-cat-cute-inactive))
+             (propertize (aref (nyan-catface) (nyan-catface-index))
+                         'face (if (mode-line-window-selected-p)
+                                   'nyan-cat-cute
+                                 'nyan-cat-cute-inactive))
+             (propertize " "
+                         'face (if (mode-line-window-selected-p)
+                                   'nyan-cat-bg-padding
+                                 'nyan-cat-inactive-bg-padding))))
+    ('nerd-cat
+     (propertize (nyan-get-char 'nerd-cat) 'face 'nyan-cat-cute))
+    ('emoji-cat
+     (propertize "" 'face 'nyan-cat-cute))))
+
+(defun nyan-get-space-segment (index)
+  "Get a cute outer space segment for position INDEX."
+  (let ((char (pcase nyan-cute-outerspace-style
+                ('plain "-")
+                ('dots (nyan-get-char 'dot))
+                ('starfield (pcase (% index 8)
+                              (0 (propertize (nyan-get-char 'tiny-sparkles)
+                                             'face (if (mode-line-window-selected-p)
+                                                       'nyan-space-star
+                                                     'nyan-inactive-space-star)))
+                              (3 (propertize (nyan-get-char 'sparkle)
+                                             'face (if (mode-line-window-selected-p)
+                                                       'nyan-space-sparkle
+                                                     'nyan-inactive-space-sparkle)))
+                              (6 (propertize (nyan-get-char 'dot)
+                                             'face (if (mode-line-window-selected-p)
+                                                       'nyan-space-void
+                                                     'nyan-inactive-space-void)))
+                              (_ (propertize " "
+                                             'face (if (mode-line-window-selected-p)
+                                                       'nyan-space-void
+                                                     'nyan-inactive-space-void)))))
+                ('void (pcase (% index 12)
+                         (0 (propertize (nyan-get-char 'sparkle)
+                                        'face (if (mode-line-window-selected-p)
+                                                  'nyan-space-sparkle
+                                                'nyan-inactive-space-sparkle)))
+                         (7 (propertize (nyan-get-char 'star)
+                                        'face (if (mode-line-window-selected-p)
+                                                  'nyan-space-star
+                                                'nyan-inactive-space-star)))
+                         (_ (propertize " "
+                                        'face (if (mode-line-window-selected-p)
+                                                  'nyan-space-void
+                                                'nyan-inactive-space-void))))))))
+    (if (stringp char) char char)))
 
 (defconst nyan-cat-face [
                           ["[]*" "[]#"]
@@ -245,39 +601,68 @@ This can be t or nil."
 (defun nyan-create ()
   "Return the Nyan Cat indicator to be inserted into mode line."
   (if (< (window-width) nyan-minimum-window-width)
-      ""                                ; disabled for too small windows
+      ""  ; disabled for too small windows
     (let* ((rainbows (nyan-number-of-rainbows))
            (outerspaces (- nyan-bar-length rainbows nyan-cat-size))
            (rainbow-string "")
-           (xpm-support (image-type-available-p 'xpm))
-           (nyancat-string (propertize
-                            (aref (nyan-catface) (nyan-catface-index))
-                            'display (nyan-get-anim-frame)))
+           (xpm-support (and (display-graphic-p)
+                            (image-type-available-p 'xpm)))
+           (use-tty-colors (and (not (display-graphic-p))
+                               nyan-rainbow-use-colors))
+           (nyancat-string "")
            (outerspace-string "")
            (buffer (current-buffer)))
+
+      ;; Build rainbow string
       (dotimes (number rainbows)
-        (setq rainbow-string (concat rainbow-string
-                                     (nyan-add-scroll-handler
-                                      (if xpm-support
-                                          (propertize "|"
-                                                      'display (create-image nyan-rainbow-image 'xpm nil :ascent (or (and nyan-wavy-trail
-                                                                                                                            (nyan-wavy-rainbow-ascent number))
-                                                                                                                       (if (nyan--is-animating-p) 95 'center))))
-                                        "|")
-                                      (/ (float number) nyan-bar-length) buffer))))
+        (setq rainbow-string
+              (concat rainbow-string
+                      (nyan-add-scroll-handler
+                       (cond
+                        (xpm-support
+                         (propertize "|"
+                                     'display (create-image nyan-rainbow-image 'xpm nil
+                                                          :ascent (or (and nyan-wavy-trail
+                                                                          (nyan-wavy-rainbow-ascent number))
+                                                                     (if (nyan--is-animating-p) 95 'center)))))
+                        (use-tty-colors
+                         (nyan-get-rainbow-segment number))
+                        (t "|"))
+                       (/ (float number) nyan-bar-length) buffer))))
+
+      ;; Build cat string
+      (setq nyancat-string
+            (cond
+             (xpm-support
+              (propertize (aref (nyan-catface) (nyan-catface-index))
+                          'display (nyan-get-anim-frame)))
+             (use-tty-colors
+              (nyan-get-cute-cat))
+             (t
+              (aref (nyan-catface) (nyan-catface-index)))))
+
+      ;; Build outer space string
       (dotimes (number outerspaces)
-        (setq outerspace-string (concat outerspace-string
-                                        (nyan-add-scroll-handler
-                                         (if xpm-support
-                                             (propertize "-"
-                                                         'display (create-image nyan-outerspace-image 'xpm nil :ascent (if (nyan--is-animating-p) 95 'center)))
-                                           "-")
-                                         (/ (float (+ rainbows nyan-cat-size number)) nyan-bar-length) buffer))))
-      ;; Compute Nyan Cat string.
+        (setq outerspace-string
+              (concat outerspace-string
+                      (nyan-add-scroll-handler
+                       (cond
+                        (xpm-support
+                         (propertize "-"
+                                     'display (create-image nyan-outerspace-image 'xpm nil
+                                                          :ascent (if (nyan--is-animating-p) 95 'center))))
+                        (use-tty-colors
+                         (nyan-get-space-segment number))
+                        (t "-"))
+                       (/ (float (+ rainbows nyan-cat-size number)) nyan-bar-length) buffer))))
+
+      ;; Compute final Nyan Cat string
       (propertize (concat rainbow-string
                           nyancat-string
                           outerspace-string)
-                  'help-echo nyan-modeline-help-string))))
+                  'help-echo (if use-tty-colors
+                                "Nyanyanyanya!✨ mouse-1: Scroll buffer position"
+                              nyan-modeline-help-string)))))
 
 
 ;;; Music handling.
@@ -300,6 +685,90 @@ This can be t or nil."
 
 
 
+;;; Interactive TTY Customization Commands
+;;; =======================================
+
+(defun nyan-cycle-cute-style ()
+  "Cycle through different cute rainbow styles."
+  (interactive)
+  (setq nyan-rainbow-style
+        (pcase nyan-rainbow-style
+          ('foreground-only 'background-only)
+          ('background-only 'solid-background)
+          ('solid-background 'cute-stars)
+          ('cute-stars 'galaxy-trail)
+          ('galaxy-trail 'foreground-only)))
+  (nyan-define-rainbow-faces)
+  (nyan-refresh)
+  (message "Nyan style: %s✨" nyan-rainbow-style))
+
+(defun nyan-cycle-cat-style ()
+  "Cycle through different cat styles."
+  (interactive)
+  (setq nyan-cat-cute-style
+        (pcase nyan-cat-cute-style
+          ('kaomoji-only 'kaomoji-with-bg)
+          ('kaomoji-with-bg 'nerd-cat)
+          ('nerd-cat 'emoji-cat)
+          ('emoji-cat 'kaomoji-only)))
+  (nyan-define-rainbow-faces)
+  (nyan-refresh)
+  (message "Nyan cat style: %s" nyan-cat-cute-style))
+
+(defun nyan-cycle-space-style ()
+  "Cycle through different outer space styles."
+  (interactive)
+  (setq nyan-cute-outerspace-style
+        (pcase nyan-cute-outerspace-style
+          ('plain 'dots)
+          ('dots 'starfield)
+          ('starfield 'void)
+          ('void 'plain)))
+  (nyan-refresh)
+  (message "Nyan space style: %s⭐" nyan-cute-outerspace-style))
+
+(defun nyan-toggle-rainbow-colors ()
+  "Toggle rainbow colors in TTY mode on/off."
+  (interactive)
+  (setq nyan-rainbow-use-colors (not nyan-rainbow-use-colors))
+  (nyan-refresh)
+  (message "Nyan rainbow colors: %s %s"
+           (if nyan-rainbow-use-colors "enabled" "disabled")
+           (if nyan-rainbow-use-colors "🌈" "")))
+
+(defun nyan-preset-kawaii ()
+  "Apply a super cute kawaii preset."
+  (interactive)
+  (setq nyan-rainbow-style 'cute-stars
+        nyan-cat-cute-style 'kaomoji-with-bg
+        nyan-cute-outerspace-style 'starfield
+        nyan-rainbow-colors '("hot pink" "deep pink" "orange" "gold" "lime green" "cyan" "deep sky blue" "magenta"))
+  (nyan-define-rainbow-faces)
+  (nyan-refresh)
+  (message "Applied kawaii preset! 🌸"))
+
+(defun nyan-preset-galaxy ()
+  "Apply a cool galaxy theme preset."
+  (interactive)
+  (setq nyan-rainbow-style 'galaxy-trail
+        nyan-cat-cute-style 'nerd-cat
+        nyan-cute-outerspace-style 'void
+        nyan-rainbow-colors '("purple" "indigo" "blue" "cyan" "teal" "green" "yellow"))
+  (nyan-define-rainbow-faces)
+  (nyan-refresh)
+  (message "Applied galaxy preset! 🌌"))
+
+(defun nyan-preset-retro ()
+  "Apply a retro/vaporwave theme preset."
+  (interactive)
+  (setq nyan-rainbow-style 'solid-background
+        nyan-cat-cute-style 'emoji-cat
+        nyan-cute-outerspace-style 'dots
+        nyan-rainbow-colors '("magenta" "cyan" "hot pink" "purple" "blue" "teal"))
+  (nyan-define-rainbow-faces)
+  (nyan-refresh)
+  (message "Applied retro preset! 🌆"))
+
 ;;;###autoload
 (define-minor-mode nyan-mode
   "Use NyanCat to show buffer size and position in mode-line.
@@ -313,6 +782,10 @@ option `scroll-bar-mode'."
   (cond (nyan-mode
          (unless nyan-old-car-mode-line-position
            (setq nyan-old-car-mode-line-position (car mode-line-position)))
+         ;; Initialize TTY faces if needed
+         (when (and (not (display-graphic-p))
+                    nyan-rainbow-use-colors)
+           (nyan-define-rainbow-faces))
          (setcar mode-line-position '(:eval (list (nyan-create))))
          ;; NOTE Redundant, but intended to, in the future, prevent the custom variable from starting the animation timer even if nyan mode isn't active. -- Jacek Złydach, 2020-05-26
          (when nyan-animate-nyancat
@@ -322,6 +795,13 @@ option `scroll-bar-mode'."
          (setcar mode-line-position nyan-old-car-mode-line-position)
          (setq nyan-old-car-mode-line-position nil))))
 
+
+;;; Initialize TTY faces on load if appropriate
+(when (and (not (display-graphic-p))
+           nyan-rainbow-use-colors
+           (boundp 'nyan-mode)
+           nyan-mode)
+  (nyan-define-rainbow-faces))
 
 (provide 'nyan-mode)
 
