@@ -696,7 +696,7 @@ Can be a color name like 'white' or a hex value like '#ffffff'."
     (delete-process nyan-music-process)
     (setq nyan-music-process nil)))
 
-
+
 
 ;;; Interactive TTY Customization Commands
 ;;; =======================================
