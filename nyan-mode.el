@@ -619,7 +619,8 @@ Can be a color name like 'white' or a hex value like '#ffffff'."
 	   (xpm-support (and (not nyan-force-ascii-mode)
 			     (display-graphic-p)
 			     (image-type-available-p 'xpm)))
-           (use-tty-colors (and (not (display-graphic-p))
+	   (use-tty-colors (and (or nyan-force-ascii-mode
+				    (not (display-graphic-p)))
 				nyan-rainbow-use-colors))
            (nyancat-string "")
            (outerspace-string "")
