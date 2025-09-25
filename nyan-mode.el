@@ -81,9 +81,10 @@ reapply them immediately."
     (when (and (boundp 'nyan-mode)
                nyan-mode)
       ;; Re-initialize TTY faces if needed
-      (when (and (not (display-graphic-p))
-                 nyan-rainbow-use-colors)
-        (nyan-define-rainbow-faces))
+      (when (and (or nyan-force-ascii-mode
+		     (not (display-graphic-p)))
+		 nyan-rainbow-use-colors)
+	 (nyan-define-rainbow-faces))
       (nyan-mode -1)
       (nyan-mode 1))))
 
@@ -799,10 +800,11 @@ option `scroll-bar-mode'."
          (unless nyan-old-car-mode-line-position
            (setq nyan-old-car-mode-line-position (car mode-line-position)))
          ;; Initialize TTY faces if needed
-         (when (and (not (display-graphic-p))
-                    nyan-rainbow-use-colors)
-           (nyan-define-rainbow-faces))
-         (setcar mode-line-position '(:eval (list (nyan-create))))
+	 (when (and (or nyan-force-ascii-mode
+			(not (display-graphic-p)))
+		    nyan-rainbow-use-colors)
+	   (nyan-define-rainbow-faces))
+        (setcar mode-line-position '(:eval (list (nyan-create))))
          ;; NOTE Redundant, but intended to, in the future, prevent the custom variable from starting the animation timer even if nyan mode isn't active. -- Jacek Złydach, 2020-05-26
          (when nyan-animate-nyancat
            (nyan-start-animation)))
@@ -813,11 +815,11 @@ option `scroll-bar-mode'."
 
 
 ;;; Initialize TTY faces on load if appropriate
-(when (and (not (display-graphic-p))
-           nyan-rainbow-use-colors
-           (boundp 'nyan-mode)
-           nyan-mode)
-  (nyan-define-rainbow-faces))
+(when (and (or (not (display-graphic-p))
+               nyan-rainbow-use-colors
+	       (boundp 'nyan-mode)
+               nyan-mode))
+           (nyan-define-rainbow-faces))
 
 (provide 'nyan-mode)
 
