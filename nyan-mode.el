@@ -133,6 +133,17 @@ reapply them immediately."
     (cancel-timer nyan-animation-timer)
     (setq nyan-animation-timer nil)))
 
+(defcustom nyan-force-ascii-mode nil
+  "Force ASCII/TTY mode even in graphical Emacs.
+When non-nil, nyan-mode will use text characters instead of images
+even when running in a GUI environment."
+  :type '(choice (const :tag "Auto (use GUI when available)" nil)
+                 (const :tag "Force ASCII mode" t))
+  :set (lambda (sym val)
+         (set-default sym val)
+         (nyan-refresh))
+  :group 'nyan)
+
 (defcustom nyan-minimum-window-width 64
   "Minimum width of the window, below which nyan-mode will not be displayed.
 This is important because nyan-mode will push out all
@@ -605,10 +616,11 @@ Can be a color name like 'white' or a hex value like '#ffffff'."
     (let* ((rainbows (nyan-number-of-rainbows))
            (outerspaces (- nyan-bar-length rainbows nyan-cat-size))
            (rainbow-string "")
-           (xpm-support (and (display-graphic-p)
-                            (image-type-available-p 'xpm)))
+	   (xpm-support (and (not nyan-force-ascii-mode)
+			     (display-graphic-p)
+			     (image-type-available-p 'xpm)))
            (use-tty-colors (and (not (display-graphic-p))
-                               nyan-rainbow-use-colors))
+				nyan-rainbow-use-colors))
            (nyancat-string "")
            (outerspace-string "")
            (buffer (current-buffer)))
@@ -773,6 +785,9 @@ Can be a color name like 'white' or a hex value like '#ffffff'."
 (define-minor-mode nyan-mode
   "Use NyanCat to show buffer size and position in mode-line.
 You can customize this minor mode, see option `nyan-mode'.
+
+Set `nyan-force-ascii-mode' to t to use text characters even in GUI Emacs.
+Set `nyan-rainbow-use-colors' to t for colorful ASCII mode in terminals.
 
 Note: If you turn this mode on then you probably want to turn off
 option `scroll-bar-mode'."
